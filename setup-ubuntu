@@ -1,0 +1,46 @@
+echo "
+ ██ ███████ ██████  ███████ ███████        █████  ███    ███ ██████  ██  
+██  ██      ██   ██ ██      ██            ██   ██ ████  ████ ██   ██  ██ 
+██  █████   ██████  █████   ███████ █████ ███████ ██ ████ ██ ██   ██  ██ 
+██  ██      ██      ██           ██       ██   ██ ██  ██  ██ ██   ██  ██ 
+ ██ ██      ██      ███████ ███████       ██   ██ ██      ██ ██████  ██  
+                                                                         
+"
+echo Sets up a Ubuntu 22.04 On any OS that has Docker
+
+read -p "Are you sure you want to proceed? (y/n): " -n 1 -r
+echo
+
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Installation aborted."
+    exit 1
+fi
+
+cat <<EOF > Dockerfile
+FROM ubuntu:22.04
+
+RUN apt-get update 
+RUN apt-get install nano neofetch curl -y
+RUN echo 'root:root' | chpasswd
+RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
+RUN apt-get install -y systemd systemd-sysv dbus dbus-user-session
+RUN printf "systemctl start systemd-logind" >> /etc/profile
+
+ENTRYPOINT ["/sbin/init"]
+EOF
+
+echo Installing
+docker build -t utmp . > /dev/null 2>&1
+echo Done installing
+
+echo "
+ ██ ██████  ██    ██ ███    ██ ███    ██ ██ ███    ██  ██████      ██████  ███████ ██  
+██  ██   ██ ██    ██ ████   ██ ████   ██ ██ ████   ██ ██           ██   ██ ██       ██ 
+██  ██████  ██    ██ ██ ██  ██ ██ ██  ██ ██ ██ ██  ██ ██   ███     ██████  █████    ██ 
+██  ██   ██ ██    ██ ██  ██ ██ ██  ██ ██ ██ ██  ██ ██ ██    ██     ██      ██       ██ 
+ ██ ██   ██  ██████  ██   ████ ██   ████ ██ ██   ████  ██████      ██      ███████ ██  
+Username: root
+Password: root
+"
+
+docker run -it --privileged --cap-add=ALL utmp
